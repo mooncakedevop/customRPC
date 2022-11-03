@@ -47,7 +47,9 @@ public class ZkServer {
                                     response.setMessageType(MessageType.RESPONSE);
                                     response.setAttachments(packet.getAttachments());
                                     response.setErrorCode(200L);
-                                    response.setMessage("{\"name\":\"throwable\"}");
+                                    ZkHelloServiceImpl zk = new ZkHelloServiceImpl();
+                                    //查找实现类、匹配方法、创建对象、调用方法
+                                    response.setMessage(zk.sayHello(""));
                                     ctx.writeAndFlush(response);
                                 }
                             });
@@ -55,7 +57,6 @@ public class ZkServer {
                     });
             ChannelFuture future = bootstrap.bind(port).sync();
             log.info("启动 netty Server[{}] 成功...", port);
-            future.channel().closeFuture().sync();
             if (future.isSuccess()) {
                 for (String key : params.keySet()) {
                     ZookeeperOp.register(key, ip + ":"+ port);

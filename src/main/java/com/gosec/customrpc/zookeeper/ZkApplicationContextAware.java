@@ -9,15 +9,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.embedded.netty.NettyWebServer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.logging.Logger;
 @Slf4j
+@Component
 public class ZkApplicationContextAware implements ApplicationContextAware {
 
-    @Value("${zk.address}")
+    @Value("127.0.0.1")
     private String zookeeperAddress;
-    @Value("${zk.port}")
+    @Value("3000")
     private int zookeeperPort;
     @Override
     public void setApplicationContext(ApplicationContext ctx) throws BeansException {

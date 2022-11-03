@@ -13,10 +13,12 @@ public class ZookeeperOp {
     private static final ZkClient zkClient = new ZkClient(zkAddress);
 
     public static void register(String serviceName, String serviceAddress) {
-        if (zkClient.exists(serviceName)) {
+//        if ((zkClient.exists(serviceName))) return;
+        if (!zkClient.exists(serviceName)) {
             zkClient.createPersistent(serviceName);
         }
-        zkClient.createEphemeral(serviceName + "/" + serviceAddress);
+
+        zkClient.createEphemeral(serviceName+ "/" +serviceAddress);
         log.info("create node %s \n", serviceName + "/" + serviceAddress);
     }
 
