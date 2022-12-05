@@ -14,7 +14,9 @@
           <element id="module-output" name="customRPC" />
         </element>
         <element id="directory" name="lib">
-          <element id="library" level="project" name="Maven: org.ow2.asm:asm:7.3.1" />
+          <element id="library" level="project" name="Maven: org.ow2.asm:asm:9.4" />
+          <element id="library" level="project" name="Maven: org.ow2.asm:asm-commons:9.4" />
+          <element id="library" level="project" name="Maven: org.ow2.asm:asm-tree:9.4" />
           <element id="library" level="project" name="Maven: io.github.classgraph:classgraph:4.8.132" />
           <element id="library" level="project" name="Maven: org.springframework.boot:spring-boot-starter:2.2.2.RELEASE" />
           <element id="library" level="project" name="Maven: org.springframework.boot:spring-boot:2.2.2.RELEASE" />

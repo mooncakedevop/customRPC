@@ -1,9 +1,18 @@
 package com.gosec.customrpc.transform;
 
 import io.github.classgraph.*;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
+import sun.misc.IOUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,20 +51,38 @@ public class ClassUtils {
             for (ClassInfo c : infoList) {
                 for (FieldInfo info : c.getFieldInfo()) {
                     for (AnnotationInfo fieldAnnotation : info.getAnnotationInfo()) {
-                        if (fieldAnnotation.getName().equals("com.duckgo.agent.RPCService")) {
+                        if (fieldAnnotation.getName().equals("com.gosec.customrpc.annotation.RPCService")) {
                             System.out.println("准备注入该方法");
-                            Host host = new Host();
-                            host.className = c.getName();
-                            host.fieldName = info.getName();
-                            host.fieldClassName = info.getClassName();
-                            host.method = info.loadClassAndGetField().getDeclaringClass().getMethods()[0];
                             // 生成实现类
-                            injectServiceImpl(host);
-                            System.out.println("生成实现类: " + host.fieldClassName + "Impl");
-                            System.out.println("实现方法：" + host.method.getName());
+                            String interfaceName = info.getTypeDescriptor().toString().replace(".","/");
 
-                            //注入属性
-                            injectField(host.fieldName, host.fieldClassName + "Impl");
+                            String implClassName = interfaceName + "Impl";
+
+                            String implClassPath = c.getClasspathElementFile().getAbsolutePath()+ File.separator + implClassName + ".class" ;
+                            File implClassFile = new File(implClassPath);
+                            implClassFile.createNewFile();
+                            byte[] implClassDump = ServiceImplDump.dump(implClassName, interfaceName,info.loadClassAndGetField().getType().getMethods()[0].getName());
+                            FileOutputStream implOutputStream = new FileOutputStream(implClassFile);
+                            implOutputStream.write(implClassDump);
+                            implOutputStream.close();
+
+                            System.out.println("注入类完成");
+
+                            String currClasspath = c.getClasspathElementFile().getAbsolutePath() + File.separator + c.getName().replace(".","/") + ".class";
+                            File currClassFile = new File(currClasspath);
+                            if (!currClassFile.exists()) {
+                                System.out.println("文件不存在");
+                            }
+                            ClassReader classReader = new ClassReader(new FileInputStream(currClassFile));
+                            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+                            //创建类访问器   并交给它去处理
+
+                            RPCClassVisitor cv = new RPCClassVisitor(Opcodes.ASM5,classWriter, c.getName(), interfaceName, implClassName,fieldAnnotation.getName());
+                            classReader.accept(cv, ClassReader.EXPAND_FRAMES);
+                            byte[] code = classWriter.toByteArray();
+                            FileOutputStream op = new FileOutputStream(currClassFile);
+                            op.write(code);
+                            op.close();
 
                             System.out.println("完成注入");
 
@@ -84,6 +111,7 @@ public class ClassUtils {
         String serviceName = host.fieldClassName;
         String methodName = host.method.getName();
         Object[] args = host.method.getParameters();
+
     }
 
     public static void injectField(String fieldName, String serviceImpl) {

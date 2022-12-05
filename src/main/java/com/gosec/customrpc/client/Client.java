@@ -1,12 +1,9 @@
 package com.gosec.customrpc.client;
 
 import com.alibaba.fastjson.JSON;
-import com.gosec.customrpc.contract.ContractProxyFactory;
-import com.gosec.customrpc.protocol.Constant;
+import com.gosec.customrpc.annotation.RPCService;
 import com.gosec.customrpc.protocol.decoder.ResponseMessagePacketDecoder;
 import com.gosec.customrpc.protocol.encoder.RequestMessagePacketEncoder;
-import com.gosec.customrpc.protocol.message.MessageType;
-import com.gosec.customrpc.protocol.message.RequestMessagePacket;
 import com.gosec.customrpc.protocol.message.ResponseMessagePacket;
 import com.gosec.customrpc.protocol.serializer.FastJsonSerializer;
 import com.gosec.customrpc.server.service.HelloService;
@@ -24,7 +21,15 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Client {
+    @RPCService
+    private HelloService helloService;
+
+    public Client() {
+//        this.helloService = new  HelloServiceImpl();
+    }
+
     public static void main(String[] args) throws InterruptedException {
+
         int port = 9092;
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         Bootstrap bootstrap = new Bootstrap();
@@ -66,13 +71,17 @@ public class Client {
             log.info("启动nettyClient[{}]成功 ...", port);
             ClientChannelHolder.CHANNEL_ATOMIC_REFERENCE.set(future.channel());
 
-            HelloService helloService = ContractProxyFactory.ofProxy(HelloService.class);
-            String result = helloService.sayHello("throwable");
-            log.info(result);
+//            HelloService helloService = ContractProxyFactory.ofProxy(HelloService.class);
+            Client c = new Client();
+            c.hello();
 
             future.channel().closeFuture().sync();
         } finally {
             workerGroup.shutdownGracefully();
         }
+    }
+    public void hello() {
+        String result = this.helloService.sayHello("throwable");
+        log.info(result);
     }
 }
