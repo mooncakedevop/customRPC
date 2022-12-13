@@ -7,6 +7,7 @@ import com.gosec.customrpc.protocol.encoder.RequestMessagePacketEncoder;
 import com.gosec.customrpc.protocol.message.ResponseMessagePacket;
 import com.gosec.customrpc.protocol.serializer.FastJsonSerializer;
 import com.gosec.customrpc.server.service.HelloService;
+import com.gosec.customrpc.transform.HelloServiceImplTransform;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -25,7 +26,7 @@ public class Client {
     private HelloService helloService;
 
     public Client() {
-//        this.helloService = new  HelloServiceImpl();
+        this.helloService = new HelloServiceImplTransform();
     }
 
     public static void main(String[] args) throws InterruptedException {
@@ -80,6 +81,7 @@ public class Client {
             workerGroup.shutdownGracefully();
         }
     }
+
     public void hello() {
         String result = this.helloService.sayHello("throwable");
         log.info(result);

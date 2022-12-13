@@ -13,7 +13,7 @@ public class RPCClassVisitor extends ClassVisitor {
 
     public RPCClassVisitor(int api, ClassVisitor classVisitor, String hostClass, String interfaceClass, String implClass, String fieldName) {
         super(api, classVisitor);
-        this.hostClass = hostClass;
+        this.hostClass = hostClass.replace(".", "/");
         this.interfaceClass = interfaceClass;
         this.implClass = implClass;
         this.fieldName = fieldName;
@@ -49,35 +49,29 @@ public class RPCClassVisitor extends ClassVisitor {
         public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             if (name.equals("<init>")) {
                 System.out.println("11111");
+                Label label0 = new Label();
+                mv.visitLabel(label0);
+                mv.visitLineNumber(28, label0);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+                Label label1 = new Label();
+                mv.visitLabel(label1);
+                mv.visitLineNumber(29, label1);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitTypeInsn(NEW, implClass);
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, implClass, "<init>", "()V", false);
+                mv.visitFieldInsn(PUTFIELD, hostClass, fieldName, "L" + interfaceClass + ";");
+                Label label2 = new Label();
+                mv.visitLabel(label2);
+                mv.visitLineNumber(30, label2);
+                mv.visitInsn(RETURN);
+                Label label3 = new Label();
+                mv.visitLabel(label3);
+                mv.visitLocalVariable("this", "L" + hostClass + ";", null, label0, label3, 0);
+                mv.visitMaxs(3, 1);
+                mv.visitEnd();
 
-                {
-                    Label label0 = new Label();
-                    mv.visitLabel(label0);
-                    mv.visitLineNumber(32, label0);
-                    mv.visitVarInsn(ALOAD, 0);
-                    mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-                    Label label1 = new Label();
-                    mv.visitLabel(label1);
-                    mv.visitLineNumber(33, label1);
-                    mv.visitVarInsn(ALOAD, 0);
-                    mv.visitInsn(POP);
-//                    this.visitTypeInsn(NEW, "com/gosec/customrpc/transform/HelloServiceImpl");
-                    mv.visitTypeInsn(NEW, implClass);
-
-                    mv.visitInsn(DUP);
-
-//                    this.visitMethodInsn(INVOKESPECIAL, "com/gosec/customrpc/transform/HelloServiceImpl", "<init>", "()V", false);
-                    mv.visitMethodInsn(INVOKESPECIAL, implClass, "<init>", "()V", false);
-
-//                    this.visitFieldInsn(PUTFIELD, "com/gosec/customrpc/client/Client", "helloService", "Lcom/gosec/customrpc/server/service/HelloService;");
-
-                    mv.visitFieldInsn(PUTFIELD, hostClass, fieldName, "L" + interfaceClass + ";");
-
-                    Label label2 = new Label();
-                    mv.visitLabel(label2);
-                    mv.visitLineNumber(34, label2);
-
-                }
             }
 
         }

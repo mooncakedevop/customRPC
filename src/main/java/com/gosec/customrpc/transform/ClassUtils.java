@@ -53,6 +53,7 @@ public class ClassUtils {
                     for (AnnotationInfo fieldAnnotation : info.getAnnotationInfo()) {
                         if (fieldAnnotation.getName().equals("com.gosec.customrpc.annotation.RPCService")) {
                             System.out.println("准备注入该方法");
+                            //属性注入
                             // 生成实现类
                             String interfaceName = info.getTypeDescriptor().toString().replace(".","/");
 
@@ -77,7 +78,7 @@ public class ClassUtils {
                             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
                             //创建类访问器   并交给它去处理
 
-                            RPCClassVisitor cv = new RPCClassVisitor(Opcodes.ASM5,classWriter, c.getName(), interfaceName, implClassName,fieldAnnotation.getName());
+                            RPCClassVisitor cv = new RPCClassVisitor(Opcodes.ASM5,classWriter, c.getName(), interfaceName, implClassName,info.getName());
                             classReader.accept(cv, ClassReader.EXPAND_FRAMES);
                             byte[] code = classWriter.toByteArray();
                             FileOutputStream op = new FileOutputStream(currClassFile);

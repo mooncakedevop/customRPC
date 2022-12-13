@@ -1,11 +1,11 @@
-## 基于Java实现的玩具RPC
+## Dynamo
 ## 简介
-项目基于[@throwable](https://github.com/zjcscut)的[Netty和SpringBoot实现一个轻量级RPC框架](https://github.com/zjcscut/netty-tutorials)，并添加了zooKeeper
+Dynamo 是一个融合了Dubbo和grpc的RPC框架，使用字节码增强技术实现了动态代理和自动属性注入，此外Dynamo还提供了gradle插件，支持IDL语言、编译增强、增量编译等功能。
 ## 技术栈
 springBoot + zooKeeper + netty
 
 ## 动态代理
-对于一个RPC框架来说、本地调用远程实现时，需要在本地为接口生成一个实现；填充网络协议建立，请求，传参等逻辑，这个时候就需要动态代理，动态地去生成这个代理方法。
+对于一个RPC框架来说、本地调用远程实现时，需要在本地为接口生成一个实现；填充网络协议，建立请求，传参等逻辑，这个时候就需要动态代理，动态地去生成这个代理方法。
 
 对于动态代理的实现，有以下几种方式 
 
@@ -100,5 +100,9 @@ methodExcuteThread.getExcuteClassLocal().set(objClass);
 - [ ] Cache
 - [ ] asm实现动态代理
 - [ ] 实现自定义注解 属性注入
+- [ ] idl插件
+- [ ] 跨平台客户端语言生成
 
 
+## 参考项目
+[@throwable](https://github.com/zjcscut) [Netty和SpringBoot实现一个轻量级RPC框架](https://github.com/zjcscut/netty-tutorials)
