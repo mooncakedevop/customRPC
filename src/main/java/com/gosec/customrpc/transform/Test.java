@@ -27,7 +27,7 @@ public class Test {
         Class<?> client = myClassLoader.loadClass("com.gosec.customrpc.client.Client");
 
         Client proxy =  (Client)client.newInstance();
-        proxy.hello();
+        proxy.hello("throwable");
 
         System.out.println("类加载器是:" + impl.getClassLoader());
 //        HelloService helloService = (HelloService) (impl.newInstance());

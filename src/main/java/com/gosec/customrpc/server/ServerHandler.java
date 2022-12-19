@@ -5,12 +5,16 @@ import com.google.common.collect.Lists;
 import com.gosec.customrpc.protocol.message.MessageType;
 import com.gosec.customrpc.protocol.message.RequestMessagePacket;
 import com.gosec.customrpc.protocol.message.ResponseMessagePacket;
+import com.gosec.customrpc.server.methodConvert.ArgumentConvertException;
 import com.gosec.customrpc.server.methodConvert.ArgumentConvertInput;
 import com.gosec.customrpc.server.methodConvert.ArgumentConvertOutput;
 import com.gosec.customrpc.server.methodConvert.MethodArgumentConverter;
+import com.gosec.customrpc.server.methodMatch.MethodMatchException;
 import com.gosec.customrpc.server.methodMatch.MethodMatchInput;
 import com.gosec.customrpc.server.methodMatch.MethodMatchOutput;
 import com.gosec.customrpc.server.methodMatch.MethodMatcher;
+import com.gosec.customrpc.server.threadPool.MyThreadPool;
+import com.sun.xml.internal.ws.api.message.Packet;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +24,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
@@ -33,8 +38,26 @@ public class ServerHandler extends SimpleChannelInboundHandler<RequestMessagePac
 
     @Autowired
     private MethodArgumentConverter methodArgumentConverter;
+
+    private MyThreadPool pool = new MyThreadPool();
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, RequestMessagePacket packet) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, RequestMessagePacket packet) {
+        pool.getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    resolvePacket(ctx, packet);
+                } catch (MethodMatchException | ArgumentConvertException | InvocationTargetException |
+                         IllegalAccessException e) {
+                    log.error("resolve err: ",e.getMessage());
+                }
+            }
+        });
+
+
+
+    }
+    public void resolvePacket(ChannelHandlerContext ctx,RequestMessagePacket packet) throws MethodMatchException, ArgumentConvertException, InvocationTargetException, IllegalAccessException {
         log.info("服务端收到： ", packet);
         MethodMatchInput input = new MethodMatchInput();
         input.setInterfaceName(packet.getInterfaceName());
@@ -46,7 +69,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<RequestMessagePac
         log.info("查找目标方法执行成功， 目标类：{}, 宿主类: {}, 宿主方法: {}", output.getTargetKlass().getCanonicalName(),
                 output.getTargetUserKlass().getCanonicalName(),
                 output.getTargetMethod().getName()
-                );
+        );
         Method method = output.getTargetMethod();
         ArgumentConvertInput convertInput = new ArgumentConvertInput();
         convertInput.setArguments(input.getMethodArgumentArraySize() > 0 ? Lists.newArrayList(methodArguments): Lists.newArrayList());
@@ -70,6 +93,5 @@ public class ServerHandler extends SimpleChannelInboundHandler<RequestMessagePac
         response.setPayload(JSON.toJSONString(result));
         log.info("服务端输出： {}", JSON.toJSONString(response));
         ctx.writeAndFlush(response);
-
     }
 }

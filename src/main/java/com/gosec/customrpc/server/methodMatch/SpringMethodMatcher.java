@@ -9,6 +9,7 @@ import org.springframework.util.ClassUtils;
 
 @Component
 public class SpringMethodMatcher extends BaseMethodMatcher implements BeanFactoryAware {
+
     private DefaultListableBeanFactory beanFactory;
     @Override
     public HostClassMethodInfo findHostMethodInfo(Class<?> interfaceClass) {

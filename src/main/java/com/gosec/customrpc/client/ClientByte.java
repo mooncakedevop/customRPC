@@ -21,10 +21,11 @@ import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class Client {
+public class ClientByte {
+    @RPCService
     private HelloService helloService;
 
-    public Client() {
+    public ClientByte() {
         this.helloService = new HelloServiceImplTransform();
     }
 
@@ -70,7 +71,6 @@ public class Client {
             ChannelFuture future = bootstrap.connect("localhost", port).sync();
             log.info("启动nettyClient[{}]成功 ...", port);
 //            ClientChannelHolder.CHANNEL_ATOMIC_REFERENCE.set(future.channel());
-            ClientChannelHolder.CHANNEL_ATOMIC_REFERENCE.set(future.channel());
 
 //            HelloService helloService = ContractProxyFactory.ofProxy(HelloService.class);
             Client c = new Client();
@@ -82,8 +82,8 @@ public class Client {
         }
     }
 
-    public void hello(String name) {
-        String result = this.helloService.sayHello(name);
+    public void hello() {
+        String result = this.helloService.sayHello("throwable");
         log.info(result);
     }
 }

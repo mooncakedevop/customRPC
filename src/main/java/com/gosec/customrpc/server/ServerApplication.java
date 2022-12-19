@@ -18,9 +18,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 
-@SpringBootApplication(scanBasePackages = "com.gosec.customrpc.server")
+@SpringBootApplication(scanBasePackages = "com.gosec.customrpc")
 @Slf4j
+@ComponentScan(excludeFilters =
+        {
+                @ComponentScan.Filter(type = FilterType.REGEX,pattern = "com.gosec.customrpc.zookeeper.*")
+        })
 public class ServerApplication implements CommandLineRunner {
     @Value("${netty.port:9092}")
     private Integer nettyPort;
