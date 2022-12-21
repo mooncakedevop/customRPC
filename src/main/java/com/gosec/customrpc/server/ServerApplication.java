@@ -53,7 +53,7 @@ public class ServerApplication implements CommandLineRunner {
                             ch.pipeline().addLast(new LengthFieldPrepender(4));
                             ch.pipeline().addLast(new RequestMessagePacketDecoder());
                             ch.pipeline().addLast(new ResponseMessagePacketEncoder(FastJsonSerializer.X));
-                            ch.pipeline().addLast(serverHandler);
+                            ch.pipeline().addLast(new ServerHandler());
 
                         }
                     });

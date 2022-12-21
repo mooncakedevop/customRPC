@@ -102,7 +102,33 @@ methodExcuteThread.getExcuteClassLocal().set(objClass);
 - [ ] 实现自定义注解 属性注入
 - [ ] idl插件
 - [ ] 跨平台客户端语言生成
+## 测试
 
+### 测试环境
+
+MacBook Air m1 16GB + 521GB
+
+### 测试方式
+
+十次测试取均值
+
+### 测试结果
+
+#### 单客户端并发调用
+
+| Thread number | max(ms) | total(ms) |
+| --- | --- | --- |
+| 1   0000 | 59  | 266 |
+| 10 0000 | 62  | 526 |
+| 10 0000 | 60.2 | 2286 |
+
+#### 多客户端并发调用
+
+| Client number | max(ms) | total(ms) |
+|---------------| --- | --- |
+| 1  00         | 60  | 90  |
+| 1 000         | 108 | 438 |
+| 2 500         | 176 | 674 |
 
 ## 参考项目
 [@throwable](https://github.com/zjcscut) [Netty和SpringBoot实现一个轻量级RPC框架](https://github.com/zjcscut/netty-tutorials)

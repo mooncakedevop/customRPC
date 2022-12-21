@@ -1,81 +1,156 @@
 package com.gosec.customrpc.jmeter;
 
+import com.alibaba.fastjson.JSON;
 import com.gosec.customrpc.client.Client;
+import com.gosec.customrpc.client.ClientChannelHolder;
+import com.gosec.customrpc.protocol.decoder.ResponseMessagePacketDecoder;
+import com.gosec.customrpc.protocol.encoder.RequestMessagePacketEncoder;
+import com.gosec.customrpc.protocol.message.ResponseMessagePacket;
+import com.gosec.customrpc.protocol.serializer.FastJsonSerializer;
+import com.gosec.customrpc.server.service.HelloService;
+import com.gosec.customrpc.transform.HelloServiceImplTransform;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.jmeter.config.Arguments;
-import org.apache.jmeter.protocol.java.sampler.AbstractJavaSamplerClient;
 import org.apache.jmeter.protocol.java.sampler.JavaSamplerContext;
-import org.apache.jmeter.samplers.SampleResult;
 
-public class PerformanceTest extends AbstractJavaSamplerClient {
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
 
-    private SampleResult result;
-    private String name;
-    Client client = new Client();
-    /**
-     * 初始化方法，用于初始化性能测试时的每个线程，每个线程测试前执行一次。
-     */
-    @Override
-    public void setupTest(JavaSamplerContext context) {
-        result = new SampleResult();
+@Slf4j
+public class PerformanceTest {
 
-        name = context.getParameter("name");
+    static volatile long max = 0;
+    static volatile long total = 0;
 
-        // 可以初始化 RPC Client
+    public void init(){
+        int port = 9092;
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        Bootstrap bootstrap = new Bootstrap();
+
+        try {
+            bootstrap.group(workerGroup);
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.option(ChannelOption.SO_KEEPALIVE, Boolean.TRUE);
+            bootstrap.option(ChannelOption.TCP_NODELAY, Boolean.TRUE);
+            bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(1024, 0, 4, 0, 4));
+                    ch.pipeline().addLast(new LengthFieldPrepender(4));
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
+                    ch.pipeline().addLast(new RequestMessagePacketEncoder(FastJsonSerializer.X));
+                    ch.pipeline().addLast(new ResponseMessagePacketDecoder());
+                    ch.pipeline().addLast(new SimpleChannelInboundHandler<ResponseMessagePacket>() {
+                        @Override
+                        protected void channelRead0(ChannelHandlerContext ctx, ResponseMessagePacket packet) throws Exception {
+                            Object targetPayload = packet.getPayload();
+                            if (targetPayload instanceof ByteBuf) {
+                                ByteBuf byteBuf = (ByteBuf) targetPayload;
+                                int readableByteLength = byteBuf.readableBytes();
+                                byte[] bytes = new byte[readableByteLength];
+                                byteBuf.readBytes(bytes);
+                                targetPayload = FastJsonSerializer.X.decode(bytes, String.class);
+                                byteBuf.release();
+                            }
+                            packet.setPayload(targetPayload);
+//                            log.info("接收到来自服务器的消息，消息内容：{}", JSON.toJSONString(packet));
+//                            log.info("接收到来自服务器的消息");
+
+                        }
+                    });
+
+                }
+            });
+            ChannelFuture future = bootstrap.connect("localhost", port).sync();
+            log.info("启动nettyClient[{}]成功 ...", port);
+            ClientChannelHolder.CHANNEL_ATOMIC_REFERENCE.set(future.channel());
+
+            Client client = new Client();
+            long start = System.currentTimeMillis();
+            client.hello("performance");
+            long end = System.currentTimeMillis();
+            long invokeTime = end - start;
+            max = max > invokeTime ? max : invokeTime;
+            total += invokeTime;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            workerGroup.shutdownGracefully();
+        }
     }
 
-    /**
-     * 测试结束时调用，可释放资源等。
-     */
-    @Override
-    public void teardownTest(JavaSamplerContext context) {
-        System.out.println("NormalJavaRequestSample.teardownTest");
+    public void singleClient(Client client) throws InterruptedException, IOException {
+        int threadNum = 1000000;
+        CountDownLatch count = new CountDownLatch(threadNum);
+        for (int i = 0; i < threadNum; i++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    long start = System.currentTimeMillis();
+                    client.hello("performance");
+                    long end = System.currentTimeMillis();
+                    long invokeTime = end - start;
+                    max = max > invokeTime ? max : invokeTime;
+                    total += invokeTime;
+                    count.countDown();
+                }
+            }).run();
+        }
+        count.await();
+        File file = new File("/Users/mooncake/IdeaProjects/customRPC/src/test/java/com/gosec/customrpc/jmeter/result.txt");
+
+        FileUtils.write(file,"thread: " + threadNum + "\n", StandardCharsets.UTF_8,true);
+
+        FileUtils.write(file,"max: " + max + "  ms\n", StandardCharsets.UTF_8,true);
+        FileUtils.write(file,"average: " + total + "ms\n", StandardCharsets.UTF_8,true);
+
+
+
+    }
+    public void singleConnect() throws InterruptedException, IOException {
+        int threadNum = 2500;
+        CountDownLatch count = new CountDownLatch(threadNum);
+        for (int i = 0; i < threadNum; i++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    PerformanceTest performanceTest = new PerformanceTest();
+                    performanceTest.init();
+                    count.countDown();
+                }
+            }).run();
+        }
+        count.await();
+        File file = new File("/Users/mooncake/IdeaProjects/customRPC/src/test/java/com/gosec/customrpc/jmeter/result.txt");
+
+        FileUtils.write(file,"client: " + threadNum + "\n", StandardCharsets.UTF_8,true);
+
+        FileUtils.write(file,"max: " + max + "  ms\n", StandardCharsets.UTF_8,true);
+        FileUtils.write(file,"average: " + total + "ms\n", StandardCharsets.UTF_8,true);
+
+
     }
 
-    /**
-     * 主要用于设置传入的参数和默认值，可在 Jmeter 界面显示。
-     */
-    @Override
-    public Arguments getDefaultParameters() {
-        Arguments arguments = new Arguments();
 
-        arguments.addArgument("name", "performance");
-
-        return arguments;
+    public static void main(String[] args) throws InterruptedException, IOException {
+       PerformanceTest test = new PerformanceTest();
+       test.init();
+       test.singleClient(new Client());
     }
 
-    /**
-     * 性能测试运行体。
-     */
-    @Override
-    public SampleResult runTest(JavaSamplerContext context) {
-        result.sampleStart(); // Jmeter 开始计时
-
-        boolean success = hello(context.getParameter("name"));
-
-        result.setSuccessful(success); // 是否成功
-        result.sampleEnd(); // Jmeter 结束计时
-
-        return result;
-    }
-
-    private boolean hello(String name) {
-        client.hello(name);
-        return true;
-    }
-
-    /**
-     * Jmeter 不会调用 main 方法，这里用于生成 Jar。
-     * @param args
-     */
-    public static void main(String[] args) {
-        Arguments arguments = new Arguments();
-        arguments.addArgument("name", "performance");
-
-        JavaSamplerContext context = new JavaSamplerContext(arguments);
-        PerformanceTest sample = new PerformanceTest();
-        sample.setupTest(context);
-        sample.runTest(context);
-        sample.teardownTest(context);
-    }
 }
 

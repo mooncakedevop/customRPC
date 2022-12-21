@@ -82,8 +82,8 @@ public class Client {
         }
     }
 
-    public void hello(String name) {
+    public String hello(String name) {
         String result = this.helloService.sayHello(name);
-        log.info(result);
+        return result;
     }
 }

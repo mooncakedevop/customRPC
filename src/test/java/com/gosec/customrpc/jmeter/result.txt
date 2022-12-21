@@ -1,0 +1,15 @@
+thread: 1000000
+max: 68  ms
+average: 2311ms
+thread: 1000000
+max: 54  ms
+average: 2230ms
+thread: 1000000
+max: 66  ms
+average: 2245ms
+thread: 1000000
+max: 54  ms
+average: 2278ms
+thread: 1000000
+max: 59  ms
+average: 2369ms

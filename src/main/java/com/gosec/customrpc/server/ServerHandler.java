@@ -5,14 +5,10 @@ import com.google.common.collect.Lists;
 import com.gosec.customrpc.protocol.message.MessageType;
 import com.gosec.customrpc.protocol.message.RequestMessagePacket;
 import com.gosec.customrpc.protocol.message.ResponseMessagePacket;
-import com.gosec.customrpc.server.methodConvert.ArgumentConvertException;
-import com.gosec.customrpc.server.methodConvert.ArgumentConvertInput;
-import com.gosec.customrpc.server.methodConvert.ArgumentConvertOutput;
-import com.gosec.customrpc.server.methodConvert.MethodArgumentConverter;
-import com.gosec.customrpc.server.methodMatch.MethodMatchException;
-import com.gosec.customrpc.server.methodMatch.MethodMatchInput;
-import com.gosec.customrpc.server.methodMatch.MethodMatchOutput;
-import com.gosec.customrpc.server.methodMatch.MethodMatcher;
+import com.gosec.customrpc.server.methodConvert.*;
+import com.gosec.customrpc.server.methodMatch.*;
+import com.gosec.customrpc.server.service.DefaultHelloService;
+import com.gosec.customrpc.server.service.HelloService;
 import com.gosec.customrpc.server.threadPool.MyThreadPool;
 import com.sun.xml.internal.ws.api.message.Packet;
 import io.netty.channel.ChannelHandlerContext;
@@ -22,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -33,16 +30,23 @@ import java.util.Optional;
 @Slf4j
 public class ServerHandler extends SimpleChannelInboundHandler<RequestMessagePacket> {
 
-    @Autowired
-    private MethodMatcher methodMatcher;
+    private MethodMatcher methodMatcher = new BaseMethodMatcher() {
+        @Override
+        public HostClassMethodInfo findHostMethodInfo(Class<?> interfaceClass) {
+            HostClassMethodInfo info = new HostClassMethodInfo();
+            info.setHostTarget(new DefaultHelloService());
+            info.setHostUserklass(DefaultHelloService.class);
+            info.setHostKlass(HelloService.class);
+            return info;
+        }
+    };
 
-    @Autowired
-    private MethodArgumentConverter methodArgumentConverter;
+    private MethodArgumentConverter methodArgumentConverter = new DefaultMethodArgumentConverter();
 
     private MyThreadPool pool = new MyThreadPool();
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, RequestMessagePacket packet) {
-        pool.getExecutor().execute(new Runnable() {
+        pool.getExecutor().submit(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -58,7 +62,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<RequestMessagePac
 
     }
     public void resolvePacket(ChannelHandlerContext ctx,RequestMessagePacket packet) throws MethodMatchException, ArgumentConvertException, InvocationTargetException, IllegalAccessException {
-        log.info("服务端收到： ", packet);
+        log.info("服务端收到： ", packet.getMethodName());
         MethodMatchInput input = new MethodMatchInput();
         input.setInterfaceName(packet.getInterfaceName());
         input.setMethodArgumentSignatures(Optional.ofNullable(packet.getMethodArgumentSignatures()).map(Lists::newArrayList).orElse(Lists.newArrayList()));
