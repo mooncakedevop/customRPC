@@ -1,6 +1,19 @@
-## Dynamo
-## 简介
-Dynamo 是一个融合了Dubbo和grpc的RPC框架，使用字节码增强技术实现了动态代理和自动属性注入，此外Dynamo还提供了gradle插件，支持IDL语言、编译增强、增量编译等功能。
+<div align="center">
+<img src="./Dynamo.png" width="200px" height="200px">
+</div>
+<h1 align="center">Dynamo</h1>
+<p align="center">
+<span>
+Dynamo 是一个融合了Dubbo和grpc的RPC框架，使用<b>字节码生成技术</b>实现了动态代理和属性注入，此外Dynamo还提供了gradle插件，支持IDL语言、增量编译等功能。
+</span>
+<br/>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-blue" alt="language">
+  <a href="https://www.npmjs.com/package/@web-printer/core"><img src="https://img.shields.io/badge/v0.0.1-EE2C50" alt="version"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/MIT-yellow" alt="license"></a>
+</p>
+
 ## 技术栈
 springBoot + zooKeeper + netty
 
