@@ -106,20 +106,21 @@ methodExcuteThread.getExcuteClassLocal().set(objClass);
 - [x] 动态代理、创建调用对象
 - [x] 方法匹配、调用
 - [x] 服务注册与发现
+- [x] 线程池
+- [x] asm实现动态代理
+- [x] 实现自定义注解 属性注入
 ## Todo
-- [ ] 线程池
+
 - [ ] 负载均衡 
 - [ ] 超时处理
 - [ ] Cache
-- [ ] asm实现动态代理
-- [ ] 实现自定义注解 属性注入
 - [ ] idl插件
 - [ ] 跨平台客户端语言生成
 ## 测试
 
 ### 测试环境
 
-MacBook Air m1 16GB + 521GB
+MacBook Air m1 16GB + 512GB
 
 ### 测试方式
 
