@@ -133,16 +133,16 @@ MacBook Air m1 16GB + 512GB
 | Thread number | max(ms) | total(ms) |
 | --- | --- | --- |
 | 10, 000 | 59  | 266 |
-| 100,000 | 62  | 526 |
-| 1,000,000 | 60.2 | 2286 |
+| 100, 000 | 62  | 526 |
+| 1, 000, 000 | 60.2 | 2286 |
 
 #### 多客户端并发调用
 
 | Client number | max(ms) | total(ms) |
 |---------------| --- | --- |
-| 1  00         | 60  | 90  |
-| 1 000         | 108 | 438 |
-| 2 500         | 176 | 674 |
+| 100         | 60  | 90  |
+| 1, 000         | 108 | 438 |
+| 2, 500         | 176 | 674 |
 
 ## 参考项目
 [@throwable](https://github.com/zjcscut) [Netty和SpringBoot实现一个轻量级RPC框架](https://github.com/zjcscut/netty-tutorials)
